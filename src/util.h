@@ -1,6 +1,30 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+static inline void *xmalloc(size_t size)
+{
+    void *ptr = malloc(size);
+    if (!ptr)
+    {
+        perror("malloc failed");
+        exit(1);
+    }
+
+    return ptr;
+}
+
+static inline void *xrealloc(void *ptr, size_t size)
+{
+    ptr = realloc(ptr, size);
+    if (!ptr) 
+    {
+        perror("xrealloc failed");
+        exit(1);
+    }
+
+    return ptr;
+}
+
 static inline bool is_space(char c)
 {
     bool retval = false;
