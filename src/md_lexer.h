@@ -1,33 +1,11 @@
 #ifndef MD_LEXER_H
 #define MD_LEXER_H
 
-// Type definitions //
-
-/*
-typedef enum token_type_t
-{
-    TT_NULL,
-    TT_end,
-    TT_newline,
-    TT_space,
-    TT_astrix,
-    TT_underscore,
-    TT_dash,
-    TT_close_chevron,
-    TT_grave_accent,
-    TT_dot,
-    TT_h1,
-    TT_h2,
-    TT_h3,
-    TT_digit,
-    TT_text,
-    TT_MAX
-} token_type_t;
-*/
+const char *token_string_list[6] = { "NULL", "End", "Space", "Hashtag", "Digit", "Text" };
 
 typedef enum token_type_t
 {
-    TT_NULL,
+    TT_NULL, 
     TT_end,
     TT_space,
     TT_hashtag,
@@ -42,9 +20,7 @@ typedef struct token_t
     const char *end;
 } token_t;
 
-// Function Declarations //
-
-static void ml_init_stream(char *stream);
 static token_t ml_get_next_token(void);
+static token_t *ml_lex_file(const char *filename);
 
 #endif // MD_LEXER_H

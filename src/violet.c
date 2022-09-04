@@ -2,22 +2,20 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "violet.h"
-#include "buffer.c"
 #include "md_lexer.c"
 #include "md_parser.c"
-
-static token_buffer_t g_token_buffer;
 
 // NOTE: Tempory for testing only
 void print_token_buffer(token_t *token_buffer)
 {
-    // for (uint32_t i = 0; i < token_buffer.count; ++i)
+    for (uint32_t i = 0; i < (uint32_t)sb_len(token_buffer); ++i)
     {
-        // token_t current_token = *(token_t *)(token_buffer.tokens + i);
-        // printf("%d\n", (int)current_token.type);
+        int token_type_int = (int)token_buffer[i].type;
+        printf("%s\n", token_string_list[token_type_int]);
     }
 }
 
@@ -25,7 +23,15 @@ void print_token_buffer(token_t *token_buffer)
 
 int main(int argc, char **argv)
 {
-    token_buffer_t *tb = ml_lex_file("../test/test.md");
+    if (argc < 1)
+    {
+        for (int i = 0; i < argc; ++i)
+        {
+            printf("%s\n", argv[i]);
+        }
+    }
+
+    token_t *tb = ml_lex_file("test/test.md");
     print_token_buffer(tb);
     return 0;
 }

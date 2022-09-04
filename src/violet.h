@@ -1,9 +1,6 @@
 #ifndef VIOLET_H
 #define VIOLET_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
 #include "md_lexer.h"
 #include "md_parser.h"
 
@@ -46,8 +43,9 @@ static inline char *read_entire_file(const char *filename)
     }
 
     // Get size of the file
-    size_t file_size = fseek(fp, 0, SEEK_END);
-    fsetpos(fp, SEEK_SET);
+    fseek(fp, 0, SEEK_END);
+    size_t file_size = ftell(fp);
+    rewind(fp);
 
     // Allocate and file contence
     file_contence = xmalloc(file_size + 1);
@@ -185,4 +183,5 @@ static inline bool is_alpha_numeric(char c)
 {
     return (is_alpha(c) || is_numeric(c));
 }
+
 #endif // VIOLET_H
