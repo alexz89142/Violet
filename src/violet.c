@@ -4,34 +4,30 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <assert.h>
 
 #include "violet.h"
-#include "md_lexer.c"
-#include "md_parser.c"
-
-// NOTE: Tempory for testing only
-void print_token_buffer(token_t *token_buffer)
-{
-    for (uint32_t i = 0; i < (uint32_t)sb_len(token_buffer); ++i)
-    {
-        int token_type_int = (int)token_buffer[i].type;
-        printf("%s\n", token_string_list[token_type_int]);
-    }
-}
+#include "md_analyzer.c"
 
 // Core //
 
 int main(int argc, char **argv)
 {
-    if (argc < 1)
+    char filename[512];
+    if (argc > 1)
     {
-        for (int i = 0; i < argc; ++i)
-        {
-            printf("%s\n", argv[i]);
-        }
+        strcpy(filename, argv[1]);
+    }
+    else
+    {
+        // TODO: Only for testing
+        strcpy(filename, "test/test.md");
     }
 
-    token_t *tb = ml_lex_file("test/test.md");
-    print_token_buffer(tb);
+    char *file_data = read_entire_file(filename);
+    mda_token_t *tb = mda_lex_stream(file_data);
+    mda_parsed_token_t *ptb = mda_parse_lexed_tokens(tb);
+
+    free(file_data);
     return 0;
 }
