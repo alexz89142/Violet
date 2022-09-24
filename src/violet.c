@@ -11,7 +11,7 @@
 
 // Test Helper //
 
-void print_token_buffer(mda_token_t *token_buffer)
+static void print_token_buffer(mda_token_t *token_buffer)
 {
     for (uint32_t i = 0; i < (uint32_t)sb_len(token_buffer); ++i)
     {
@@ -21,7 +21,7 @@ void print_token_buffer(mda_token_t *token_buffer)
     puts("------------");
 }
 
-void print_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
+static void print_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
 {
     for (uint32_t i = 0; i < sb_len(parsed_token_buffer); ++i)
     {
@@ -31,7 +31,7 @@ void print_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
     puts("------------");
 }
 
-void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
+static void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
 {
     for (uint32_t i = 0; i < sb_len(parsed_token_buffer); ++i)
     {
@@ -69,7 +69,6 @@ void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer
     }
 }
 
-
 // Core //
 
 int main(int argc, char **argv)
@@ -90,6 +89,8 @@ int main(int argc, char **argv)
     mda_parsed_token_t *ptb = mda_parse_lexed_tokens(tb);
 
     // Making sure output is correct
+    assert((int)TT_MAX == arr_size(token_string_list));
+    assert((int)PTT_MAX == arr_size(parsed_token_string_list));
     print_token_buffer(tb);
     print_parsed_token_buffer(ptb);
     print_html_from_parsed_token_buffer(ptb);

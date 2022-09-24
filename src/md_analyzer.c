@@ -13,7 +13,7 @@ static bool mda_token_type_is_symbol(mda_token_type_t tt)
 static bool mda_token_type_is_endspace(mda_token_type_t tt)
 {
     // TODO: Update as more endspaces are added
-    return (tt == TT_end);
+    return (tt == TT_end || tt == TT_newline);
 }
 
 // Lexer //
@@ -28,6 +28,12 @@ static mda_token_t mda_get_next_token(void)
         case '\0':
         {
             token.type = TT_end;
+        } break;
+
+        case '\n':
+        {
+            token.type = TT_newline;
+            g_stream++;
         } break;
 
         case ' ':
@@ -115,6 +121,18 @@ static mda_parsed_token_t *mda_parse_lexed_tokens(mda_token_t *token_buffer)
                 tracker_token = (mda_parsed_token_t){0};
             } break;
 
+            case TT_newline:
+            {
+                current_parsed_token.type = tracker_token.type;
+                current_parsed_token.count = tracker_token.count;
+                current_parsed_token.is_end_node = true;
+                tracker_token = (mda_parsed_token_t){0};
+
+                while (current_token = token_buffer[++i], 
+                       current_token.type == TT_newline);
+                --i;
+            } break;
+
             case TT_space:
             {
                 // NOTE: This should never get here 
@@ -152,7 +170,24 @@ static mda_parsed_token_t *mda_parse_lexed_tokens(mda_token_t *token_buffer)
                 tracker_token = current_parsed_token;
             } break;
 
-            default: break;
+            default: 
+            {
+                // NOTE: This should never get here 
+                // if current_type is not PTT_NULL
+                assert(tracker_token.type == PTT_NULL);
+                
+                current_parsed_token.type = PTT_paragraph;
+                current_parsed_token.start = current_token.start;
+
+                while (current_token = token_buffer[i++],
+                       !(mda_token_type_is_symbol(current_token.type) || 
+                       mda_token_type_is_endspace(current_token.type)))
+                {
+                    current_parsed_token.len += current_token.len;
+                }
+                i -= 2; // Set it back, because for loop will increment
+                tracker_token = current_parsed_token;
+            } break;
         }
 
         sb_push(parsed_token_buffer, current_parsed_token);

@@ -1,18 +1,20 @@
 #ifndef MD_ANALYZER_H
 #define MD_ANALYZER_H
 
-const char *token_string_list[] = { "NULL", "End", "Space", "Hashtag", "Astrix", "Digit", "Text" };
+const char *token_string_list[] = { "NULL", "End", "New Line", "Space", "Hashtag", "Astrix", "Digit", "Text" };
 const char *parsed_token_string_list[] = { "NULL", "Header", "Paragraph" };
 
 typedef enum mda_token_type_t
 {
     TT_NULL, 
     TT_end,
+    TT_newline,
     TT_space,
     TT_hashtag,
     TT_astrix,
     TT_digit,
-    TT_text
+    TT_text,
+    TT_MAX
 } mda_token_type_t;
 
 typedef struct mda_token_t
@@ -26,7 +28,8 @@ typedef enum mda_parsed_token_type_t
 {
     PTT_NULL, 
     PTT_header,
-    PTT_paragraph
+    PTT_paragraph,
+    PTT_MAX
 } mda_parsed_token_type_t;
 
 typedef struct mda_parsed_token_t

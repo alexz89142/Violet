@@ -1,6 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+// Array
+
+#define arr_size(arr) (sizeof((arr)) / sizeof(((arr)[0])))
+
 // Memory
 
 static inline void *xmalloc(size_t size)
