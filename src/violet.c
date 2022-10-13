@@ -7,39 +7,32 @@
 #include <assert.h>
 
 #include "violet.h"
-#include "md_analyzer.c"
+#include "parser.c"
 
 // Test Helper //
 
-static void print_token_buffer(mda_token_t *token_buffer)
+static void print_token_buffer(token_t *ptb)
 {
-    for (uint32_t i = 0; i < (uint32_t)sb_len(token_buffer); ++i)
+    for (uint32_t i = 0; i < (uint32_t)sb_len(ptb); ++i)
     {
-        int token_type_int = (int)token_buffer[i].type;
+        int token_type_int = (int)ptb[i].type;
+        if (ptb[i].is_end_node)
+        {
+            printf("End ");
+        }
         printf("%s\n", token_string_list[token_type_int]);
     }
-    puts("------------");
 }
 
-static void print_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
+static void print_html_from_token_buffer(token_t *ptb)
 {
-    for (uint32_t i = 0; i < sb_len(parsed_token_buffer); ++i)
+    for (uint32_t i = 0; i < sb_len(ptb); ++i)
     {
-        int token_type_int = (int)parsed_token_buffer[i].type;
-        printf("%s\n", parsed_token_string_list[token_type_int]);
-    }
-    puts("------------");
-}
-
-static void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token_buffer)
-{
-    for (uint32_t i = 0; i < sb_len(parsed_token_buffer); ++i)
-    {
-        mda_parsed_token_t token = parsed_token_buffer[i];
+        token_t token = ptb[i];
 
         switch (token.type)
         {
-            case PTT_header:
+            case TT_header:
             {
                 if (token.is_end_node)
                 {
@@ -51,7 +44,7 @@ static void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token
                 printf("%.*s\n", token.len, token.start);
             } break;
 
-            case PTT_paragraph:
+            case TT_paragraph:
             {
                 if (token.is_end_node)
                 {
@@ -63,6 +56,11 @@ static void print_html_from_parsed_token_buffer(mda_parsed_token_t *parsed_token
                 printf("%.*s", token.len, token.start);
                 printf("\n");
             } break;
+
+            case TT_continue:
+            {
+                printf("%.*s", token.len, token.start);
+            }
 
             default: break;
         }
@@ -85,15 +83,13 @@ int main(int argc, char **argv)
     }
 
     char *file_data = read_entire_file(filename);
-    mda_token_t *tb = mda_lex_stream(file_data);
-    mda_parsed_token_t *ptb = mda_parse_lexed_tokens(tb);
+    token_t *ptb = violet_parse_stream(file_data);
 
     // Making sure output is correct
     assert((int)TT_MAX == arr_size(token_string_list));
-    assert((int)PTT_MAX == arr_size(parsed_token_string_list));
-    print_token_buffer(tb);
-    print_parsed_token_buffer(ptb);
-    print_html_from_parsed_token_buffer(ptb);
+    print_token_buffer(ptb);
+    puts("-------------");
+    print_html_from_token_buffer(ptb);
 
     free(file_data);
     return 0;
