@@ -10,6 +10,34 @@ static bool violet_is_char_endspace(char c)
     return (c == '\0' || c == '\n');
 }
 
+static bool violet_check_for_bold(char *current_stream)
+{
+    char c;
+    while (c = *++current_stream, !violet_is_char_endspace(c))
+    {
+        if (c == '*' && *++current_stream == '*')
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool violet_check_for_italics(char *current_stream)
+{
+    char c;
+    while (c = *++current_stream, !violet_is_char_endspace(c))
+    {
+        if (c == '*')
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static void violet_finish_line(token_t **token_buffer, token_t **tracker_buffer)
 {
     if (sb_len(*tracker_buffer) > 0)
@@ -37,14 +65,19 @@ static token_t *violet_parse_stream(char *stream)
     while (*stream)
     {
         token_t current_token = {0};
+        // TODO: rename endspace
         bool endspace = false;
+
+        // TODO: For testing purposes only
+        int tracker_buffer_size = sb_len(tracker_buffer);
 
         switch (*stream)
         {
             case '\n':
             {
-                if (sb_len(tracker_buffer) == 0)
+                if (tracker_buffer_size == 0)
                 {
+                    while (*++stream == '\n');
                     break;
                 }
 
@@ -85,10 +118,79 @@ static token_t *violet_parse_stream(char *stream)
                 {
                     current_token.len++;
                 }
+                --stream;
             } break;
 
             case '*':
             {
+                bool two_asterix = *++stream == '*';
+                token_type_t last_tracker_buffer_element_type = tracker_buffer ?
+                    tracker_buffer[sb_len(tracker_buffer) - 1].type : TT_NULL;
+
+                if (two_asterix && tracker_buffer && 
+                    last_tracker_buffer_element_type == TT_bold)
+                {
+                    sb_pop(tracker_buffer);
+                    tracker_buffer_size = sb_len(tracker_buffer);
+                    token_t end_token = {0};
+                    end_token.type = TT_bold;
+                    end_token.is_end_node = true;
+                    sb_push(token_buffer, end_token);
+                    endspace = true;
+                    ++stream;
+                    break;
+                }
+                else if (tracker_buffer && last_tracker_buffer_element_type == TT_italics)
+                {
+                    sb_pop(tracker_buffer);
+                    tracker_buffer_size = sb_len(tracker_buffer);
+                    token_t end_token = {0};
+                    end_token.type = TT_italics;
+                    end_token.is_end_node = true;
+                    sb_push(token_buffer, end_token);
+                    endspace = true;
+                    break;
+                }
+                
+                if (two_asterix)
+                {
+                    if (violet_check_for_bold(++stream))
+                    {
+                        current_token.type = TT_bold;
+                        current_token.start = stream;
+                        current_token.count = 2;
+                    }
+                    else
+                    {
+                        stream -= 2;
+                        current_token.type = TT_continue;
+                        current_token.start = stream;
+                        current_token.count = 0;
+                    }
+                }
+                else
+                {
+                    if (violet_check_for_italics(stream))
+                    {
+                        current_token.type = TT_italics;
+                        current_token.start = stream;
+                        current_token.count = 1;
+                    }
+                    else
+                    {
+                        current_token.type = TT_continue;
+                        current_token.start = --stream;
+                        current_token.count = 0;
+                    }
+                }
+
+                char c;
+                while (c = *stream++,
+                       !(violet_is_char_symbol(c) || violet_is_char_endspace(c)))
+                {
+                    current_token.len++;
+                }
+                --stream;
             } break;
 
             case '0': case '1': 
@@ -118,10 +220,11 @@ static token_t *violet_parse_stream(char *stream)
                 {
                     current_token.len++;
                 }
+                --stream;
             } break;
         }
 
-        if (!endspace)
+        if (!endspace && current_token.type != TT_NULL)
         {
             sb_push(token_buffer, current_token);
 
