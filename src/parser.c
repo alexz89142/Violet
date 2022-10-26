@@ -1,13 +1,19 @@
 #include "parser.h"
 
-static bool violet_is_char_symbol(char c)
+static bool violet_is_char_whitespace(char c)
 {
-    return (c == '*');
+    return (c == ' ' || c == '\t' || c == '\v' || 
+        c == '\f' || c == '\n' || c == '\r');
 }
 
 static bool violet_is_char_endspace(char c)
 {
-    return (c == '\0' || c == '\n');
+    return (c == '\0' || c == '\n' || c == '\r');
+}
+
+static bool violet_is_char_symbol(char c)
+{
+    return (c == '*');
 }
 
 static bool violet_check_for_bold(char *current_stream)
@@ -38,29 +44,29 @@ static bool violet_check_for_italics(char *current_stream)
     return false;
 }
 
-static void violet_finish_line(token_t **token_buffer, token_t **tracker_buffer)
+static void violet_finish_line(token_t **token_buffer, token_t **end_token_buffer)
 {
-    if (sb_len(*tracker_buffer) > 0)
+    if (sb_len(*end_token_buffer) > 0)
     {
-        for (int i = sb_len(*tracker_buffer) - 1; i >= 0; --i)
+        for (int i = sb_len(*end_token_buffer) - 1; i >= 0; --i)
         {
             token_t ctt = {0};
-            ctt.type = tracker_buffer[i]->type;
-            ctt.count = tracker_buffer[i]->count;
+            ctt.type = end_token_buffer[i]->type;
+            ctt.count = end_token_buffer[i]->count;
             ctt.is_end_node = true;
 
             sb_push(*token_buffer, ctt);
         }
 
-        sb_free(*tracker_buffer);
-        *tracker_buffer = NULL;
+        sb_free(*end_token_buffer);
+        *end_token_buffer = NULL;
     }
 }
 
 static token_t *violet_parse_stream(char *stream)
 {
     token_t *token_buffer = NULL;
-    token_t *tracker_buffer = NULL;
+    token_t *end_token_buffer = NULL;
 
     while (*stream)
     {
@@ -68,27 +74,28 @@ static token_t *violet_parse_stream(char *stream)
         // TODO: rename endspace
         bool endspace = false;
 
-        // TODO: For testing purposes only
-        int tracker_buffer_size = sb_len(tracker_buffer);
-
         switch (*stream)
         {
             case '\n':
+            case '\r':
             {
-                if (tracker_buffer_size == 0)
+                if (sb_len(end_token_buffer) == 0)
                 {
-                    while (*++stream == '\n');
+                    while (violet_is_char_endspace(*++stream));
                     break;
                 }
 
                 endspace = true;
-                violet_finish_line(&token_buffer, &tracker_buffer);
-                while (*++stream == '\n');
+                violet_finish_line(&token_buffer, &end_token_buffer);
+                while (violet_is_char_endspace(*++stream));
             } break;
 
             case ' ':
+            case '\t':
+            case '\v':
+            case '\f':
             {
-                while (*++stream == ' ');
+                while (violet_is_char_whitespace(*++stream));
             } break;
 
             case '#':
@@ -124,30 +131,31 @@ static token_t *violet_parse_stream(char *stream)
             case '*':
             {
                 bool two_asterix = *++stream == '*';
-                token_type_t last_tracker_buffer_element_type = tracker_buffer ?
-                    tracker_buffer[sb_len(tracker_buffer) - 1].type : TT_NULL;
+                token_type_t last_etb_element_type = end_token_buffer ?
+                    end_token_buffer[sb_len(end_token_buffer) - 1].type : TT_NULL;
 
-                if (two_asterix && tracker_buffer && 
-                    last_tracker_buffer_element_type == TT_bold)
+                if (two_asterix && end_token_buffer && 
+                    last_etb_element_type == TT_bold)
                 {
-                    sb_pop(tracker_buffer);
-                    tracker_buffer_size = sb_len(tracker_buffer);
-                    token_t end_token = {0};
-                    end_token.type = TT_bold;
-                    end_token.is_end_node = true;
-                    sb_push(token_buffer, end_token);
+                    sb_pop(end_token_buffer);
+                    sb_push(token_buffer, (token_t) {
+                        .type = TT_bold, 
+                        .is_end_node = true
+                    });
+
                     endspace = true;
                     ++stream;
                     break;
                 }
-                else if (tracker_buffer && last_tracker_buffer_element_type == TT_italics)
+                else if (end_token_buffer && 
+                         last_etb_element_type == TT_italics)
                 {
-                    sb_pop(tracker_buffer);
-                    tracker_buffer_size = sb_len(tracker_buffer);
-                    token_t end_token = {0};
-                    end_token.type = TT_italics;
-                    end_token.is_end_node = true;
-                    sb_push(token_buffer, end_token);
+                    sb_pop(end_token_buffer);
+                    sb_push(token_buffer, (token_t) {
+                        .type = TT_italics, 
+                        .is_end_node = true
+                    });
+
                     endspace = true;
                     break;
                 }
@@ -203,7 +211,7 @@ static token_t *violet_parse_stream(char *stream)
 
             default:
             {
-                if (sb_len(tracker_buffer) == 0)
+                if (sb_len(end_token_buffer) == 0)
                 {
                     current_token.type = TT_paragraph;
                 }
@@ -230,11 +238,11 @@ static token_t *violet_parse_stream(char *stream)
 
             if (current_token.type != TT_continue)
             {
-                sb_push(tracker_buffer, current_token);
+                sb_push(end_token_buffer, current_token);
             }
         }
     }
 
-    violet_finish_line(&token_buffer, &tracker_buffer);
+    violet_finish_line(&token_buffer, &end_token_buffer);
     return token_buffer;
 }
