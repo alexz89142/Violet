@@ -23,8 +23,16 @@ typedef struct token_t
     bool is_end_node;
 } token_t;
 
+typedef struct parser_t
+{
+    token_t *token_buffer;
+    token_t *end_token_buffer;
+    token_t current_token;
+    bool should_push;
+} parser_t;
+
 static bool violet_is_char_symbol(char c);
 static bool violet_is_char_endspace(char c);
-static token_t *violet_parse_stream(char *stream);
+static void violet_parse_stream(parser_t *parser, char *stream);
 
 #endif // PARSER_H

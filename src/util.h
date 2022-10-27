@@ -71,7 +71,7 @@ typedef struct strechy_buffer_t
 
 #define sb_push(buff, val)           (sb_maybe_grow(buff, 1), (buff)[sb_len(buff)] = (val), sb_meta_data(buff)->len++)
 #define sb_free(buff)                ((buff) ? free(sb_meta_data(buff)) : 0)
-#define sb_pop(buff)               ((sb_meta_data(buff)->len > 0) ? sb_meta_data(buff)->len-- : 0)
+#define sb_pop(buff)                 ((sb_meta_data(buff)->len > 0) ? sb_meta_data(buff)->len-- : 0)
 
 #define sb_meta_data(buff)           ((strechy_buffer_t *)((uint8_t *)buff - offsetof(strechy_buffer_t, data)))
 #define sb_len(buff)                 ((buff) ? sb_meta_data(buff)->len : 0)

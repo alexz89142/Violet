@@ -82,15 +82,21 @@ int main(int argc, char **argv)
         strcpy(filename, "test/test.md");
     }
 
-    char *file_data = read_entire_file(filename);
-    token_t *ptb = violet_parse_stream(file_data);
+    parser_t parser = (parser_t) {
+        .token_buffer = NULL,
+        .end_token_buffer = NULL,
+        .current_token = (token_t){0},
+        .should_push = true
+    };
 
-    // Making sure output is correct
-    assert((int)TT_MAX == arr_size(token_string_list));
-    print_token_buffer(ptb);
-    puts("-------------");
-    print_html_from_token_buffer(ptb);
+    char *file_data = read_entire_file(filename);
+    violet_parse_stream(&parser, file_data);
+
+    assert((int)TT_MAX == arr_size(token_string_list)); // TODO: Testing
+    print_token_buffer(parser.token_buffer);
 
     free(file_data);
+    sb_free(parser.token_buffer);
+    sb_free(parser.end_token_buffer);
     return 0;
 }
