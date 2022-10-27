@@ -170,8 +170,7 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                     int symbol_count = (int)two_asterix * 1 + 1;
                     parser->current_token = (token_t) {
                         .type = TT_continue,
-                        .start = (stream -= symbol_count),
-                        .count = 0
+                        .start = (stream -= symbol_count)
                     };
                 }
 
@@ -184,11 +183,35 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                 --stream;
             } break;
 
-            case '0': case '1':
-            case '2': case '3':
-            case '4': case '5':
-            case '6': case '7':
-            case '8': case '9':
+            case '>':
+            {
+                if (*++stream != ' ')
+                {
+                    parser->current_token = (token_t) {
+                        .type = TT_paragraph,
+                        .start = --stream
+                    };
+                }
+                else
+                {
+                    parser->current_token = (token_t) {
+                        .type = TT_blockquote,
+                        .start = ++stream
+                    };
+                }
+
+                char c;
+                while (c = *stream++,
+                       !(violet_is_char_symbol(c) || violet_is_char_endspace(c)))
+                {
+                    ++parser->current_token.len;
+                }
+                --stream;
+            }
+
+            case '1': case '2': case '3':
+            case '4': case '5': case '6':
+            case '7': case '8': case '9':
             {
             } break;
 
