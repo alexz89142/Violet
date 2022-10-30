@@ -1,7 +1,7 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-const char *token_string_list[] = { "NULL", "Header", "Paragraph", "Bold", "Italics", "Blockquote", "Continue"};
+const char *token_string_list[] = { "NULL", "Header", "Paragraph", "Bold", "Italics", "Blockquote", "Code", "Continue"};
 
 typedef enum token_type_t
 {
@@ -11,6 +11,7 @@ typedef enum token_type_t
     TT_bold,
     TT_italics,
     TT_blockquote,
+    TT_code,
     TT_continue,
     TT_MAX
 } token_type_t;

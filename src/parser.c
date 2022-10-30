@@ -12,29 +12,29 @@ static bool violet_is_char_endspace(char c)
 
 static bool violet_is_char_symbol(char c)
 {
-    return (c == '*');
+    return (c == '*' || c == '`');
 }
 
-static bool violet_check_for_bold(char *current_stream)
+static bool violet_check_string_match(char *s1, char *s2, int match_num)
 {
-    char c;
-    while (c = *++current_stream, !violet_is_char_endspace(c))
+    while (match_num--)
     {
-        if (c == '*' && *++current_stream == '*')
+        if (*s1++ != *s2++)
         {
-            return true;
+            return false;
         }
     }
 
-    return false;
+    return true;
 }
 
-static bool violet_check_for_italics(char *current_stream)
+static bool violet_check_for_symbol_string(char *current_stream, char *symbol_stream)
 {
     char c;
     while (c = *++current_stream, !violet_is_char_endspace(c))
     {
-        if (c == '*')
+        if (c == *symbol_stream && violet_check_string_match(
+            current_stream, symbol_stream, strlen(symbol_stream)))
         {
             return true;
         }
@@ -149,7 +149,7 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                     break;
                 }
 
-                if (two_asterix && violet_check_for_bold(++stream))
+                if (two_asterix && violet_check_for_symbol_string(++stream, "**"))
                 {
                     parser->current_token = (token_t) {
                         .type = TT_bold,
@@ -157,7 +157,7 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                         .count = 2
                     };
                 }
-                else if (violet_check_for_italics(stream))
+                else if (violet_check_for_symbol_string(stream, "*"))
                 {
                     parser->current_token = (token_t) {
                         .type = TT_italics,
@@ -213,6 +213,45 @@ static void violet_parse_stream(parser_t *parser, char *stream)
             case '4': case '5': case '6':
             case '7': case '8': case '9':
             {
+            } break;
+
+            case '`':
+            {
+                int etb_size = sb_len(parser->end_token_buffer);
+                token_t last_etb_element = etb_size > 0 ? 
+                    parser->end_token_buffer[etb_size - 1] : (token_t){0};
+                token_type_t last_etb_element_type = last_etb_element.type;
+                    
+                if (last_etb_element_type == TT_code)
+                {
+                    violet_shift_last_etb_element(parser, last_etb_element_type);
+                    ++stream;
+                    break;
+                }
+
+                if (violet_check_for_symbol_string(++stream, "`"))
+                {
+                    parser->current_token = (token_t) {
+                        .type = TT_code,
+                        .start = stream,
+                        .count = 1
+                    };
+                }
+                else
+                {
+                    parser->current_token = (token_t) {
+                        .type = TT_paragraph,
+                        .start = --stream
+                    };
+                }
+
+                char c;
+                while (c = *stream++,
+                       !(violet_is_char_symbol(c) || violet_is_char_endspace(c)))
+                {
+                    ++parser->current_token.len;
+                }
+                --stream;
             } break;
 
             default:
