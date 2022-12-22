@@ -19,6 +19,12 @@ $ ./build.sh
 $ ./bin/violet
 ```
 
+**Windows:**
+```
+$ .\build.bat
+$ .\bin\violet
+```
+
 ## To Contribute
 
 There are no major rules in terms of pull requests at the moments for requriements,

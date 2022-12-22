@@ -14,3 +14,4 @@ name=violet
 $CC $CFLAGS -o $name $src
 
 cd ..
+
