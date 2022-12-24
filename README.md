@@ -25,6 +25,66 @@ $ .\build.bat
 $ .\bin\violet
 ```
 
+## Supported Markdown
+
+**Heading**
+```
+# H1
+## H2
+### H3
+```
+
+**Bold**
+```
+**Bold Text**
+```
+
+**Italic**
+```
+*Italicized Text*
+```
+
+**Blockquote**
+```
+> Blockquote
+```
+
+**Code**
+```
+`Code`
+```
+
+### Needs To Be Implemented
+
+**Ordered List**
+```
+1. First Item
+2. Second Item
+3. Third Item
+```
+
+**Unordered List**
+```
+- First Item
+- Second Item
+- Third Item
+```
+
+**Break**
+```
+---
+```
+
+**Link**
+```
+[Title](https://www.website.com)
+```
+
+**Image**
+```
+![Alt Text](image.jpg)
+```
+
 ## To Contribute
 
 There are no major rules in terms of pull requests at the moments for requriements,
