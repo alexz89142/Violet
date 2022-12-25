@@ -264,11 +264,57 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                 --stream;
             } break;
 
-            case '1': case '2': case '3':
-            case '4': case '5': case '6':
-            case '7': case '8': case '9':
+            case '!':
             {
             } break;
+
+            case '[':
+            {
+                int current_symbol_count = 1;
+                int open_bracket = 0;
+                int close_bracket = 0;
+                int open_paren = 0;
+                int close_paren = 0;
+
+                char c;
+                while (c = *stream++, !violet_is_char_endspace(c))
+                {
+                    switch (c)
+                    {
+                        case '[':
+                        {
+                            open_bracket = current_symbol_count++;
+                        } break;
+
+                        case ']':
+                        {
+                            close_bracket = current_symbol_count++;
+                        } break;
+
+                        case '(':
+                        {
+                            open_paren = current_symbol_count++;
+                        } break;
+
+                        case ')':
+                        {
+                            close_paren = current_symbol_count++;
+                        } break;
+
+                        default: break;
+                    }
+                }
+
+                if (open_bracket == 1 && close_bracket == 2 &&
+                    open_paren == 3 && close_paren == 4)
+                {
+                    // TODO: Link token
+                }
+                else
+                {
+                    // TODO: TT_paragraph
+                }
+            }
 
             case '`':
             {
@@ -307,6 +353,12 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                     ++parser->current_token.len;
                 }
                 --stream;
+            } break;
+
+            case '1': case '2': case '3':
+            case '4': case '5': case '6':
+            case '7': case '8': case '9':
+            {
             } break;
 
             default:
