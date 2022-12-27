@@ -77,6 +77,62 @@ static void violet_finish_line(parser_t *parser)
     parser->should_push = false;
 }
 
+static bool violet_check_if_valid_external_token(char *stream, external_token_type_t ett)
+{
+    int current_symbol_count = 1;
+    int open_bracket = 0;
+    int close_bracket = 0;
+    int open_paren = 0;
+    int close_paren = 0;
+
+    char c;
+    while (c = *stream++, !violet_is_char_endspace(c))
+    {
+        switch (c)
+        {
+            case '[':
+            {
+                open_bracket = current_symbol_count++;
+            } break;
+
+            case ']':
+            {
+                close_bracket = current_symbol_count++;
+
+                // There is whitespace between the close bracket and open paren
+                if (*++stream != '(')
+                {
+                    return false;
+                }
+            } break;
+
+            case '(':
+            {
+                open_paren = current_symbol_count++;
+            } break;
+
+            case ')':
+            {
+                close_paren = current_symbol_count++;
+            } break;
+
+            case ' ':
+            {
+                // There cannot be a space in a link
+                if (ett == Link && current_symbol_count > 2)
+                {
+                    return false;
+                }
+            } break;
+
+            default: break;
+        }
+    }
+
+    return (open_bracket == 1 && close_bracket == 2 &&
+            open_paren == 3 && close_paren == 4);
+}
+
 static void violet_parse_stream(parser_t *parser, char *stream)
 {
     while (*stream)
@@ -265,56 +321,47 @@ static void violet_parse_stream(parser_t *parser, char *stream)
             } break;
 
             case '!':
-            {
-            } break;
-
             case '[':
             {
-                int current_symbol_count = 1;
-                int open_bracket = 0;
-                int close_bracket = 0;
-                int open_paren = 0;
-                int close_paren = 0;
-
-                char c;
-                while (c = *stream++, !violet_is_char_endspace(c))
+                external_token_type_t ett = Link;
+                if (*stream == '!')
                 {
-                    switch (c)
-                    {
-                        case '[':
-                        {
-                            open_bracket = current_symbol_count++;
-                        } break;
-
-                        case ']':
-                        {
-                            close_bracket = current_symbol_count++;
-                        } break;
-
-                        case '(':
-                        {
-                            open_paren = current_symbol_count++;
-                        } break;
-
-                        case ')':
-                        {
-                            close_paren = current_symbol_count++;
-                        } break;
-
-                        default: break;
-                    }
+                    stream++;
+                    ett = Image;
                 }
 
-                if (open_bracket == 1 && close_bracket == 2 &&
-                    open_paren == 3 && close_paren == 4)
+                parser->current_token = (token_t) {
+                    .type = TT_paragraph,
+                    .start = --stream
+                };
+
+                if (violet_check_if_valid_external_token(stream, ett))
                 {
-                    // TODO: Link token
+                    parser->current_token.type = TT_link;
+                    parser->current_token.external.secondary = ++stream;
+
+                    char c;
+                    while (c = *stream++, c != ']')
+                    {
+                        // TODO: Check if this count is correct
+                        parser->current_token.external.secondary_count++;
+                    }
+
+                    parser->current_token.external.primary = ++stream;
+
+                    while (c = *stream++, c != ')')
+                    {
+                        // TODO: Check if this count is correct
+                        parser->current_token.external.primary_count++;
+                    }
+
+                    // TODO: Figure out if need to continue here
                 }
                 else
                 {
                     // TODO: TT_paragraph
                 }
-            }
+            } break;
 
             case '`':
             {

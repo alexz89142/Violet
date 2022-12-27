@@ -3,7 +3,8 @@
 
 const char *token_string_list[] = {
     "NULL", "Header", "Paragraph", "Bold", "Italics",
-    "Blockquote", "Code", "Break", "Unordered List", "Continue"
+    "Blockquote", "Unordered List", "Ordered List",
+    "Code", "Break", "Link", "Image", "Continue"
 };
 
 typedef enum token_type_t
@@ -14,12 +15,29 @@ typedef enum token_type_t
     TT_bold,
     TT_italics,
     TT_blockquote,
+    TT_unordered_list,
+    TT_ordered_list,
     TT_code,
     TT_break,
-    TT_unordered_list,
+    TT_link,
+    TT_image,
     TT_continue,
     TT_MAX
 } token_type_t;
+
+typedef enum external_token_type_t
+{
+    Image,
+    Link
+} external_token_type_t;
+
+typedef struct external_token_t
+{
+    uint32_t primary_count;
+    uint32_t secondary_count;
+    const char *primary;
+    const char *secondary;
+} external_token_t;
 
 typedef struct token_t
 {
@@ -27,9 +45,9 @@ typedef struct token_t
     uint32_t count;
     uint32_t len;
     const char *start;
+    external_token_t external;
     bool is_end_node;
 } token_t;
-
 typedef struct parser_t
 {
     token_t *token_buffer;
