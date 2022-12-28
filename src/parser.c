@@ -241,19 +241,15 @@ static void violet_parse_stream(parser_t *parser, char *stream)
 
             case '>':
             {
-                if (*++stream != ' ')
+                parser->current_token = (token_t) {
+                    .type = TT_paragraph,
+                    .start = stream
+                };
+
+                if (*++stream == ' ')
                 {
-                    parser->current_token = (token_t) {
-                        .type = TT_paragraph,
-                        .start = --stream
-                    };
-                }
-                else
-                {
-                    parser->current_token = (token_t) {
-                        .type = TT_blockquote,
-                        .start = ++stream
-                    };
+                    parser->current_token.type = TT_blockquote;
+                    parser->current_token.start = ++stream;
                 }
 
                 char c;
@@ -320,47 +316,10 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                 --stream;
             } break;
 
-            case '!':
-            case '[':
+            case '1': case '2': case '3':
+            case '4': case '5': case '6':
+            case '7': case '8': case '9':
             {
-                external_token_type_t ett = Link;
-                if (*stream == '!')
-                {
-                    stream++;
-                    ett = Image;
-                }
-
-                parser->current_token = (token_t) {
-                    .type = TT_paragraph,
-                    .start = --stream
-                };
-
-                if (violet_check_if_valid_external_token(stream, ett))
-                {
-                    parser->current_token.type = TT_link;
-                    parser->current_token.external.secondary = ++stream;
-
-                    char c;
-                    while (c = *stream++, c != ']')
-                    {
-                        // TODO: Check if this count is correct
-                        parser->current_token.external.secondary_count++;
-                    }
-
-                    parser->current_token.external.primary = ++stream;
-
-                    while (c = *stream++, c != ')')
-                    {
-                        // TODO: Check if this count is correct
-                        parser->current_token.external.primary_count++;
-                    }
-
-                    // TODO: Figure out if need to continue here
-                }
-                else
-                {
-                    // TODO: TT_paragraph
-                }
             } break;
 
             case '`':
@@ -402,10 +361,53 @@ static void violet_parse_stream(parser_t *parser, char *stream)
                 --stream;
             } break;
 
-            case '1': case '2': case '3':
-            case '4': case '5': case '6':
-            case '7': case '8': case '9':
+            case '!':
+            case '[':
             {
+                external_token_type_t ett = Link;
+                token_type_t tt = TT_link;
+                if (*stream == '!')
+                {
+                    stream++;
+                    ett = Image;
+                    tt = TT_image;
+                }
+
+                parser->current_token = (token_t) {
+                    .type = TT_paragraph,
+                    .start = --stream
+                };
+
+                if (violet_check_if_valid_external_token(stream, ett))
+                {
+                    parser->current_token.type = tt;
+
+                    assert(*stream == '[');
+                    parser->current_token.external.secondary = ++stream;
+
+                    char c;
+                    while (c = *stream++, c != ']')
+                    {
+                        parser->current_token.external.secondary_count++;
+                    }
+
+                    assert(*stream == '(');
+                    parser->current_token.external.primary = ++stream;
+
+                    while (c = *stream++, c != ')')
+                    {
+                        parser->current_token.external.primary_count++;
+                    }
+                }
+
+                // TODO: Verify if this is what we want to do for image as well
+                char c;
+                while (c = *stream++,
+                       !(violet_is_char_symbol(c) || violet_is_char_endspace(c)))
+                {
+                    ++parser->current_token.len;
+                }
+                --stream;
             } break;
 
             default:
