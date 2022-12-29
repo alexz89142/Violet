@@ -1,4 +1,4 @@
 bin/
-test/
+temp/
 .vscode/
 *.txt

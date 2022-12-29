@@ -48,6 +48,7 @@ typedef struct token_t
     external_token_t external;
     bool is_end_node;
 } token_t;
+
 typedef struct parser_t
 {
     token_t *token_buffer;
@@ -56,8 +57,14 @@ typedef struct parser_t
     bool should_push;
 } parser_t;
 
-static bool violet_is_char_symbol(char c);
+static bool violet_is_char_whitespace(char c);
 static bool violet_is_char_endspace(char c);
+static bool violet_is_char_symbol(char c);
+static bool violet_check_string_match(char *s1, char *s2, int match_num);
+static bool violet_check_for_symbol_string(char *current_stream, char *symbol_stream);
+static void violet_shift_last_etb_element(parser_t *parser, token_type_t last_etb_element_type);
+static void violet_finish_line(parser_t *parser);
+static bool violet_check_if_valid_external_token(char *stream, external_token_type_t ett);
 static void violet_parse_stream(parser_t *parser, char *stream);
 
 #endif // PARSER_H
