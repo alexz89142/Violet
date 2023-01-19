@@ -51,7 +51,7 @@ static void print_html_from_token_buffer(token_t *ptb)
                     printf("</p>\n");
                     break;
                 }
-                
+
                 printf("<p>\n");
                 printf("%.*s", token.len, token.start);
                 printf("\n");
