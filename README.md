@@ -94,3 +94,8 @@ other than the changes must be on a seperate branch, where the name of the branc
 clear outlines the feature that is being changed. I would also advise using the
 same general code format that is currently being used.
 
+## Contributions  
+
+Special thanks to the following contributors:
+- alexz89142
+
