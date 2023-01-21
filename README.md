@@ -1,6 +1,6 @@
 # Violet
 
-![Logo](logo.webp)
+![Logo](logo.webp width=30%)
 
 Violet is a simple static website generator written in C. Violet allows users
 to write pages in mark down and will use a configuration file to build a website
