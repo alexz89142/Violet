@@ -2,11 +2,11 @@
 
 :: Config works as the following:
 :: [keyword] = [value]
-:: it will not general if keyword is invalid
+:: it will not generate if keyword is invalid
 
 md_files_dir = ~/Dev/continers
 output_dir = ~/Dev
 header_html = ~/Dev/continers/header.html
 footer_html = ~/Dev/continers/footer.html
 index_html = ~/Dev/continers/index.html
-should_overwrite = true
+should_overwrite = 1

@@ -9,9 +9,11 @@
 #include "../src/util.h"
 #include "../src/parser.c"
 
+bool test_heading(void);
+
 const char *test_func_names[] = {
     "test_heading"
-}
+};
 
 bool (*test_funcs[])(void) = {
     test_heading,
@@ -19,10 +21,13 @@ bool (*test_funcs[])(void) = {
 
 // Tests //
 
+#define unused(x) (void)x
+
 bool test_heading(void)
 {
     // TODO: Note string must be null terminated
     const char *test_input = "# This a test for heading\0";
+    unused(test_input);
 
     // TODO:
     // Generate what the output buffer should be
@@ -36,20 +41,22 @@ bool test_heading(void)
 
 bool test_verify_matching_array(token_t *tb_a, token_t *tb_b)
 {
+    unused(tb_a);
+    unused(tb_b);
     // TODO: Implement
     return true;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     uint32_t test_funcs_size = arr_size(test_funcs);
     // Name array has to be same length as the test funcs
-    assert(test_funcs_size == arr_size(test_func_name));
+    assert(test_funcs_size == arr_size(test_func_names));
 
 
     uint32_t tests_passed_count = 0;
     bool (*current)(void);
-    for (int i = 0; i < test_funcs_size; ++i)
+    for (uint32_t i = 0; i < test_funcs_size; ++i)
     {
         current = test_funcs[i];
 
