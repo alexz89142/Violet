@@ -221,15 +221,16 @@ static line_t violet_parse_config_line(char *data)
     keyword[count] = '\0';
 
     keyword_t current_keyword = voilet_get_keyword_type(keyword);
-    printf("%d\n %c\n %s\n %s\n", (int)current_keyword, *data, keyword, data);
     if (current_keyword == KEYWORD_invalid || *data != '=')
     {
         current_line.invalid = 1;
         return current_line;
     }
 
-    current_line.value = (data += 3);
-    current_line.size = (count + 3);
+    current_line.keyword = current_keyword;
+    current_line.value = (data += 2);
+    int space_and_equal_size = 3; // " = "
+    current_line.size = (count + space_and_equal_size);
     while (c = *data++, c != '\n' && c != '\0')
     {
         current_line.size++;
