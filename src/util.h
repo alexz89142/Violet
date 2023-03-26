@@ -13,8 +13,7 @@ static inline char *read_entire_file(const char *filename)
     FILE *fp = fopen(filename, "r");
     if (fp == NULL)
     {
-        perror("File was not able to be opened");
-        exit(1);
+        return NULL;
     }
 
     // Get size of the file

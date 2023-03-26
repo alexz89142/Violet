@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <dirent.h>
 #include <assert.h>
 
 #include "violet.h"
@@ -122,12 +123,84 @@ static void violet_handle_invalid_result(result_t *res)
 
 static void violet_validate_config(settings_t *settings)
 {
-    if (settings->input_directory[0] == 0 || settings->output_directory[0] == 0)
+    if (settings->input_dir_path[0] == 0 || settings->output_dir_path[0] == 0)
     {
         violet_error("Input or output directory are required, missing from config");
     }
 }
 
+static void violet_close_settings(settings_t *settings)
+{
+    // Close directories
+    closedir(settings->input_dir);
+    closedir(settings->output_dir);
+
+    // Free file data if exists
+    if (settings->header_data != NULL)
+    {
+        free(settings->header_data);
+    }
+
+    if (settings->footer_data != NULL)
+    {
+        free(settings->footer_data);
+    }
+
+    if (settings->index_data != NULL)
+    {
+        free(settings->index_data);
+    }
+}
+
+static void violet_load_settings(settings_t *settings)
+{
+    // Load directories
+    
+    settings->input_dir = opendir(settings->input_dir_path);
+    if (settings->input_dir == NULL)
+    {
+        violet_error("Could not open input directory");
+    }
+
+    settings->output_dir = opendir(settings->output_dir_path);
+    if (settings->output_dir == NULL)
+    {
+        violet_error("Could not open input directory");
+    }
+
+    // Read file data
+
+    if (settings->header_path[0] != 0)
+    {
+        settings->header_data = read_entire_file(settings->header_path);
+
+        if (settings->header_data == NULL)
+        {
+            violet_error("Could not open header file");
+        }
+    }
+
+    if (settings->footer_path[0] != 0)
+    {
+        settings->footer_data = read_entire_file(settings->footer_path);
+
+        if (settings->footer_data == NULL)
+        {
+            violet_error("Could not open footer file");
+        }
+    }
+
+    if (settings->index_data[0] != 0)
+    {
+        settings->index_data = read_entire_file(settings->index_html_path);
+
+        if (settings->index_data == NULL)
+        {
+            violet_error("Could not open index file");
+        }
+    }
+}
+        
 static result_t violet_fill_settings(settings_t *settings, line_t line)
 {
     result_t res = {0};
@@ -150,27 +223,27 @@ static result_t violet_fill_settings(settings_t *settings, line_t line)
     {
         case KEYWORD_input:
         {
-            memcpy(&settings->input_directory, line.value, src_size);
+            memcpy(&settings->input_dir_path, line.value, src_size);
         } break;
 
         case KEYWORD_output:
         {
-            memcpy(&settings->output_directory, line.value, src_size);
+            memcpy(&settings->output_dir_path, line.value, src_size);
         } break;
 
         case KEYWORD_header:
         {
-            memcpy(&settings->header, line.value, src_size);
+            memcpy(&settings->header_path, line.value, src_size);
         } break;
 
         case KEYWORD_footer:
         {
-            memcpy(&settings->footer, line.value, src_size);
+            memcpy(&settings->footer_path, line.value, src_size);
         } break;
 
         case KEYWORD_index:
         {
-            memcpy(&settings->index_html, line.value, src_size);
+            memcpy(&settings->index_html_path, line.value, src_size);
         } break;
 
         case KEYWORD_overwrite:
@@ -251,8 +324,14 @@ static void violet_parse_config(settings_t *settings, char *file_data)
     }
 
     violet_validate_config(settings);
+    violet_load_settings(settings);
 }
 
+static void violet_close_config(settings_t *settings, char *file_data)
+{
+    free(file_data);
+    violet_close_settings(settings);
+}
 
 // Core //
 
@@ -270,12 +349,17 @@ int main(int argc, char **argv)
     }
 
     char *file_data = read_entire_file(config);
+    if (file_data == NULL)
+    {
+        violet_error("Config file could not be open, verify file exists");
+    }
 
     settings_t settings = {0};
     violet_parse_config(&settings, file_data);
 
     printf("Input: %s, Output: %s\n",
-           settings.input_directory, settings.output_directory);
+           settings.input_dir_path, settings.output_dir_path);
+
 
     parser_t parser = (parser_t) {
         .token_buffer = NULL,
@@ -284,13 +368,15 @@ int main(int argc, char **argv)
         .should_push = true
     };
 
-    #if 0 
+    /*
     violet_parse_stream(&parser, file_data);
 
     assert((int)TT_MAX == arr_size(token_string_list)); // TODO: Testing
     print_token_buffer(parser.token_buffer);
     print_html_from_token_buffer(parser.token_buffer);
-    #endif
+    */
+
+    violet_close_config(&settings, file_data);
 
     free(file_data);
     sb_free(parser.token_buffer);

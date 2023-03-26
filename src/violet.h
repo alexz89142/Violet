@@ -30,14 +30,19 @@ typedef struct line_t
 typedef struct settings_t
 {
     // Settings
-    char input_directory[MAX_FILE_PATH_SIZE];
-    char output_directory[MAX_FILE_PATH_SIZE];
-    char header[MAX_FILE_PATH_SIZE];
-    char footer[MAX_FILE_PATH_SIZE];
-    char index_html[MAX_FILE_PATH_SIZE];
+    char input_dir_path[MAX_FILE_PATH_SIZE];
+    char output_dir_path[MAX_FILE_PATH_SIZE];
+    char header_path[MAX_FILE_PATH_SIZE];
+    char footer_path[MAX_FILE_PATH_SIZE];
+    char index_html_path[MAX_FILE_PATH_SIZE];
     int should_overwrite;
 
     // Loaded
+    DIR *input_dir;
+    DIR *output_dir;
+    char *header_data;
+    char *footer_data;
+    char *index_data;
 } settings_t;
 
 typedef struct result_t
@@ -54,7 +59,11 @@ static keyword_t voilet_get_keyword_type(char *word);
 static bool violet_is_line_comment(char *data);
 static void violet_handle_invalid_result(result_t *res);
 static void violet_validate_config(settings_t *settings);
+static void violet_close_settings(settings_t *settings);
+static void violet_load_settings(settings_t *settings);
 static result_t violet_fill_settings(settings_t *settings, line_t line);
 static line_t violet_parse_config_line(char *data);
+static void violet_parse_config(settings_t *settings, char *file_data);
+static void violet_close_config(settings_t *settings, char *file_data);
 
 #endif // VIOLET_H
