@@ -6,7 +6,7 @@ mkdir -p bin
 cd bin
 
 CC=gcc
-CFLAGS="-Wall -Wextra -Wno-address -std=c11 -ggdb"
+CFLAGS="-Wall -Wextra -Wno-address -std=c11 -std=gnu11 -ggdb"
 
 # Build violet
 src=../src/violet.c

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <assert.h>
+#define _GNU_SOURCE
 
 #include "violet.h"
 #include "parser.c"
@@ -74,6 +75,35 @@ static void violet_error(const char *err_msg)
 {
     fprintf(stderr, "[VIOLET_ERROR] Could not generate site: %s\n", err_msg);
     exit(1);
+}
+
+static int violet_build_filename(char *dest,
+                                 const char *base,
+                                 const char *secondary,
+                                 char seperator,
+                                 int dest_size)
+{
+    int base_size = strlen(base);
+    int second_size = strlen(secondary);
+    int total_size = base_size + second_size + 1;
+    if (total_size >= dest_size)
+    {
+        return 0;
+    }
+
+    strncpy(dest, base, base_size);
+    dest[base_size] = seperator;
+    dest[base_size + 1] = '\0';
+    strcat(dest, secondary);
+    return 1;
+}
+
+// HTML Translation //
+
+#define UNUSED(x) (void)(x)
+static void violet_translate_token_buffer_to_html(token_t *ptb)
+{
+    UNUSED(ptb);
 }
 
 // Config Parsing // 
@@ -190,7 +220,7 @@ static void violet_load_settings(settings_t *settings)
         }
     }
 
-    if (settings->index_data[0] != 0)
+    if (settings->index_html_path[0] != 0)
     {
         settings->index_data = read_entire_file(settings->index_html_path);
 
@@ -348,38 +378,80 @@ int main(int argc, char **argv)
         violet_error(err_msg);
     }
 
-    char *file_data = read_entire_file(config);
-    if (file_data == NULL)
+    char *config_data = read_entire_file(config);
+    if (config_data == NULL)
     {
         violet_error("Config file could not be open, verify file exists");
     }
 
     settings_t settings = {0};
-    violet_parse_config(&settings, file_data);
+    violet_parse_config(&settings, config_data);
 
-    printf("Input: %s, Output: %s\n",
-           settings.input_dir_path, settings.output_dir_path);
+    // printf("Input: %s, Output: %s\n", settings.input_dir_path, settings.output_dir_path);
+
+    struct dirent *current_dir;
+    while ((current_dir = readdir(settings.input_dir)) != NULL)
+    {
+        if (current_dir->d_type == DT_REG)
+        {
+            parser_t parser = (parser_t) {
+                .token_buffer = NULL,
+                .end_token_buffer = NULL,
+                .current_token = (token_t){0},
+                .should_push = true
+            };
+
+            // Build current file path
+            const char *idp = settings.input_dir_path;
+            const char *odp = settings.output_dir_path;
+            const char *current_name = current_dir->d_name;
+
+            char current_filename[1024];
+            violet_build_filename(current_filename, idp, current_name, '/', 1024);
+
+            // Check if file aready exsits
+            // TODO; The following code generate a SEGFAULT
+            char c;
+            int pos = 0;
+            char html_filename[1024];
+            while (c = current_name[pos++], c != '.')
+            {
+                html_filename[pos] = c;
+            }
+
+            printf("%s\n", html_filename);
+
+            const char *ext = ".html";
+            for (int i = 0; i < 5; ++i)
+            {
+                html_filename[pos + i] = ext[i];
+            }
+
+            violet_build_filename(current_filename, odp, html_filename, '/', 1024);
+            printf("%s\n", html_filename);
+
+            // Read, Parse, and translate md file to html
+            char *file_data = read_entire_file(current_filename);
+            if (file_data == NULL)
+            {
+                printf("Skipping [%s] file, could not be opened", current_filename);
+                continue;
+            }
+
+            violet_parse_stream(&parser, file_data);
+            assert((int)TT_MAX == arr_size(token_string_list)); // TODO: Testing
+            print_token_buffer(parser.token_buffer);
+            print_html_from_token_buffer(parser.token_buffer);
 
 
-    parser_t parser = (parser_t) {
-        .token_buffer = NULL,
-        .end_token_buffer = NULL,
-        .current_token = (token_t){0},
-        .should_push = true
-    };
+            violet_translate_token_buffer_to_html(parser.token_buffer);
 
-    /*
-    violet_parse_stream(&parser, file_data);
+            // Clean up for current file
+            sb_free(parser.token_buffer);
+            sb_free(parser.end_token_buffer);
+        }
+    }
 
-    assert((int)TT_MAX == arr_size(token_string_list)); // TODO: Testing
-    print_token_buffer(parser.token_buffer);
-    print_html_from_token_buffer(parser.token_buffer);
-    */
-
-    violet_close_config(&settings, file_data);
-
-    free(file_data);
-    sb_free(parser.token_buffer);
-    sb_free(parser.end_token_buffer);
+    violet_close_config(&settings, config_data);
     return 0;
 }
