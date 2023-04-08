@@ -71,11 +71,11 @@ static void print_html_from_token_buffer(token_t *ptb)
 
 // Util //
 
-static void violet_error(const char *err_msg)
-{
-    fprintf(stderr, "[VIOLET_ERROR] Could not generate site: %s\n", err_msg);
+#define violet_error(err_msg, ...)                               \
+    fprintf(stderr, "[VIOLET_ERROR] Could not generate site: "); \
+    fprintf(stderr, err_msg, ##__VA_ARGS__);                     \
+    fprintf(stderr, "\n");                                       \
     exit(1);
-}
 
 static int violet_build_filename(char *dest,
                                  const char *base,
@@ -248,14 +248,6 @@ static bool violet_is_line_comment(char *data)
     return (*data == ':' && *(++data) == ':');
 }
 
-static void violet_handle_invalid_result(result_t *res)
-{
-    if (!res->success)
-    {
-        violet_error(res->message);
-    }
-}
-
 static void violet_validate_config(settings_t *settings)
 {
     if (settings->input_dir_path[0] == 0 || settings->output_dir_path[0] == 0)
@@ -336,21 +328,15 @@ static void violet_load_settings(settings_t *settings)
     }
 }
         
-static result_t violet_fill_settings(settings_t *settings, line_t line)
+static void violet_fill_settings(settings_t *settings, line_t line)
 {
-    result_t res = {0};
-    
     if (line.invalid)
     {
-        const char *err_msg = "Error in config file, incorrect keyword or formatting";
-        strncpy((char *)&res.message, err_msg, 512);
-        return res;
+        violet_error("Error in config file, incorrect keyword or formatting.");
     }
     else if (line.value_size > MAX_FILE_PATH_SIZE)
     {
-        const char *err_msg = "Path size too big, must be under 512 charaters!";
-        strncpy((char *)&res.message, err_msg, 512);
-        return res;
+        violet_error("Path size too big, must be under 512 charaters.");
     }
 
     size_t src_size = sizeof(char) * line.value_size;
@@ -388,10 +374,6 @@ static result_t violet_fill_settings(settings_t *settings, line_t line)
 
         default: break;
     }
-
-    res.success = 1;
-    strncpy((char *)&res.message, "Value udpated in settings!", 512);
-    return res;
 }
 
 
@@ -453,8 +435,7 @@ static void violet_parse_config(settings_t *settings, char *file_data)
     while (*file_data)
     {
         line_t line = violet_parse_config_line(file_data);
-        result_t res = violet_fill_settings(settings, line);
-        violet_handle_invalid_result(&res);
+        violet_fill_settings(settings, line);
         file_data += line.size;
     }
 
@@ -479,8 +460,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        char *err_msg = "Config file path required `./violet <config_file_path>`";
-        violet_error(err_msg);
+        violet_error("Config file path required `./violet <config_file_path>`");
     }
 
     char *config_data = read_entire_file(config);
@@ -510,7 +490,6 @@ int main(int argc, char **argv)
             const char *idp = settings.input_dir_path;
             const char *odp = settings.output_dir_path;
             const char *current_name = current_dir->d_name;
-
 
             // Check if html file aready exsits
             char html_full_path[1024];

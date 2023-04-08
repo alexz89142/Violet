@@ -17,8 +17,7 @@ typedef enum keyword_t
     KEYWORD_overwrite
 } keyword_t;
 
-typedef struct line_t
-{
+typedef struct line_t {
     bool invalid;
     keyword_t keyword;
     uint32_t size;
@@ -45,23 +44,13 @@ typedef struct settings_t
     char *index_data;
 } settings_t;
 
-typedef struct result_t
-{
-    int success;
-    char message[512];
-} result_t;
-
-// Util
-static void violet_error(const char *err_msg);
-
 // Config Parsing
 static keyword_t voilet_get_keyword_type(char *word);
 static bool violet_is_line_comment(char *data);
-static void violet_handle_invalid_result(result_t *res);
 static void violet_validate_config(settings_t *settings);
 static void violet_close_settings(settings_t *settings);
 static void violet_load_settings(settings_t *settings);
-static result_t violet_fill_settings(settings_t *settings, line_t line);
+static void violet_fill_settings(settings_t *settings, line_t line);
 static line_t violet_parse_config_line(char *data);
 static void violet_parse_config(settings_t *settings, char *file_data);
 static void violet_close_config(settings_t *settings, char *file_data);
