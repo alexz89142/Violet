@@ -98,12 +98,117 @@ static int violet_build_filename(char *dest,
     return 1;
 }
 
+static int violet_build_and_check_html_file(char *html_full_path,
+                                            int html_full_path_size,
+                                            const char *odp,
+                                            const char *md_filename)
+{
+    // Build extract filename 
+    char c;
+    int pos = 0;
+    char html_filename[1024];
+    while (c = md_filename[pos], c != '.')
+    {
+        html_filename[pos++] = c;
+    }
+
+    if (pos + 5 >= 1024)
+    {
+        // TODO: More useful error message
+        violet_error("violet_build_and_check_html_file failed");
+    }
+
+    // Append html to filename
+    const char *ext = ".html";
+    for (int i = 0; i < 5; ++i)
+    {
+        html_filename[pos + i] = ext[i];
+    }
+    html_filename[pos + 5] = '\0';
+
+    // Generate full path
+    violet_build_filename(
+        html_full_path, odp, html_filename, '/', html_full_path_size);
+
+    // Check if exists
+    return check_file_exists(html_full_path);
+}
+
 // HTML Translation //
 
-#define UNUSED(x) (void)(x)
-static void violet_translate_token_buffer_to_html(token_t *ptb)
+static void violet_translate_token_buffer_to_html(token_t *ptb,
+                                                  const char *header_data,
+                                                  const char *footer_data,
+                                                  const char *out_filename)
 {
-    UNUSED(ptb);
+    FILE *out_file = fopen(out_filename, "w");
+    if (out_file == NULL)
+    {
+        // TODO: make violet_error be able to take varible lenght args
+        // Need to pass the name of the file to the user.
+        violet_error("Error open html file to write");
+    }
+
+    if (header_data != NULL)
+    {
+        fprintf(out_file, "%s\n", header_data);
+    }
+
+    for (uint32_t i = 0; i < sb_len(ptb); ++i)
+    {
+        token_t token = ptb[i];
+
+        // Get open or close tags
+        const char **tags = token_tags; 
+        if (token.is_end_node)
+        {
+            tags = token_end_tags;
+        }
+
+        // Write tags
+        switch (token.type)
+        {
+            case TT_NULL:
+            case TT_MAX:
+                // TODO: Should never be hit more detailed output
+                violet_error("Invalid token type found in token buffer");
+                break;
+
+            case TT_header:
+                fprintf(out_file, tags[token.type], token.count);
+                break;
+
+            case TT_paragraph:
+            case TT_bold:
+            case TT_italics:
+            case TT_blockquote:
+            case TT_unordered_list:
+            case TT_ordered_list:
+            case TT_code:
+            case TT_break:
+            case TT_continue:
+                fprintf(out_file, tags[token.type], 0);
+                break;
+                
+            case TT_link:
+            case TT_image:
+                // TODO: IMPLEMENT
+                violet_error("Unimplemented");
+                break;
+
+            default: break;
+        }
+
+        // Write out contence
+        fprintf(out_file, "%.*s\n", token.len, token.start);
+    }
+
+    if (footer_data != NULL)
+    {
+        fprintf(out_file, "%s\n", footer_data);
+    }
+
+    fclose(out_file);
 }
 
 // Config Parsing // 
@@ -406,29 +511,19 @@ int main(int argc, char **argv)
             const char *odp = settings.output_dir_path;
             const char *current_name = current_dir->d_name;
 
+
+            // Check if html file aready exsits
+            char html_full_path[1024];
+            int html_file_exists = violet_build_and_check_html_file(
+                html_full_path, 1024, odp, current_name);
+
+            if (!settings.should_overwrite && html_file_exists)
+            {
+                continue;
+            }
+
             char current_filename[1024];
             violet_build_filename(current_filename, idp, current_name, '/', 1024);
-
-            // Check if file aready exsits
-            // TODO; The following code generate a SEGFAULT
-            char c;
-            int pos = 0;
-            char html_filename[1024];
-            while (c = current_name[pos++], c != '.')
-            {
-                html_filename[pos] = c;
-            }
-
-            printf("%s\n", html_filename);
-
-            const char *ext = ".html";
-            for (int i = 0; i < 5; ++i)
-            {
-                html_filename[pos + i] = ext[i];
-            }
-
-            violet_build_filename(current_filename, odp, html_filename, '/', 1024);
-            printf("%s\n", html_filename);
 
             // Read, Parse, and translate md file to html
             char *file_data = read_entire_file(current_filename);
@@ -438,15 +533,23 @@ int main(int argc, char **argv)
                 continue;
             }
 
+            // Parse and translate
             violet_parse_stream(&parser, file_data);
-            assert((int)TT_MAX == arr_size(token_string_list)); // TODO: Testing
-            print_token_buffer(parser.token_buffer);
-            print_html_from_token_buffer(parser.token_buffer);
+            violet_translate_token_buffer_to_html(parser.token_buffer,
+                                                  settings.header_data,
+                                                  settings.footer_data,
+                                                  html_full_path);
 
-
-            violet_translate_token_buffer_to_html(parser.token_buffer);
+            // TODO: TESTING
+            {
+                assert((int)TT_MAX == arr_size(token_string_list));
+                print_token_buffer(parser.token_buffer);
+                print_html_from_token_buffer(parser.token_buffer);
+            }
+            // TODO: TESTING
 
             // Clean up for current file
+            free(file_data); 
             sb_free(parser.token_buffer);
             sb_free(parser.end_token_buffer);
         }

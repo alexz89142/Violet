@@ -30,6 +30,14 @@ static inline char *read_entire_file(const char *filename)
     return file_contence;
 }
 
+static inline int check_file_exists(const char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) return 0;
+    fclose(fp);
+    return 1;
+}
+
 // Sean Barret Style Strechy Buffers
 
 typedef struct strechy_buffer_t
