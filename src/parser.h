@@ -7,6 +7,40 @@ const char *token_string_list[] = {
     "Code", "Break", "Link", "Image", "Continue"
 };
 
+const char *token_tags[] = {
+    "NULL",
+    "<h%d>\n",
+    "<p>\n",
+    "<em>\n",
+    "<i>\n",
+    "<blockquote>\n",
+    "<ul>\n",
+    "<ol>\n",
+    "<code class='prettyprint'>\n",
+    "<br>\n",
+    "<a href='%s'>\n",
+    "<img src='%s'>\n",
+    "",
+    "MAX"
+};
+
+const char *token_end_tags[] = {
+    "NULL",
+    "</h%d>\n",
+    "</p>\n",
+    "</em>\n",
+    "</i>\n",
+    "</blockquote>\n",
+    "</ul>\n",
+    "</ol>\n",
+    "</code>\n",
+    "</br>\n",
+    "</a>\n",
+    "</img>\n",
+    "",
+    "MAX"
+};
+
 typedef enum token_type_t
 {
     TT_NULL,

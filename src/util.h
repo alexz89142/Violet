@@ -5,32 +5,6 @@
 
 #define arr_size(arr) (sizeof((arr)) / sizeof(((arr)[0])))
 
-// Memory
-
-static inline void *xmalloc(size_t size)
-{
-    void *ptr = malloc(size);
-    if (!ptr)
-    {
-        perror("malloc failed");
-        exit(1);
-    }
-
-    return ptr;
-}
-
-static inline void *xrealloc(void *ptr, size_t size)
-{
-    ptr = realloc(ptr, size);
-    if (!ptr) 
-    {
-        perror("xrealloc failed");
-        exit(1);
-    }
-
-    return ptr;
-}
-
 // IO Operations
 
 static inline char *read_entire_file(const char *filename)
@@ -39,8 +13,7 @@ static inline char *read_entire_file(const char *filename)
     FILE *fp = fopen(filename, "r");
     if (fp == NULL)
     {
-        perror("File was not able to be opened");
-        exit(1);
+        return NULL;
     }
 
     // Get size of the file
@@ -49,12 +22,20 @@ static inline char *read_entire_file(const char *filename)
     rewind(fp);
 
     // Allocate and file contence
-    file_contence = xmalloc(file_size + 1);
+    file_contence = malloc(file_size + 1);
     fread(file_contence, 1, file_size, fp);
     file_contence[file_size] = '\0';
         
     fclose(fp);
     return file_contence;
+}
+
+static inline int check_file_exists(const char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) return 0;
+    fclose(fp);
+    return 1;
 }
 
 // Sean Barret Style Strechy Buffers
@@ -86,12 +67,12 @@ static inline void *__sb_grow(void *buff, size_t increment, size_t item_size)
     strechy_buffer_t *new_buff;
     if (buff)
     {
-        new_buff = (strechy_buffer_t *)xrealloc(
+        new_buff = (strechy_buffer_t *)realloc(
             sb_meta_data(buff), item_size * new_cap + offsetof(strechy_buffer_t, data));
     }
     else
     {
-        new_buff = (strechy_buffer_t *)xmalloc(
+        new_buff = (strechy_buffer_t *)malloc(
             item_size * new_cap + offsetof(strechy_buffer_t, data));
         new_buff->len = 0;
     }

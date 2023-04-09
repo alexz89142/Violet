@@ -1,0 +1,12 @@
+:: double colon is comment and will be ignored
+
+:: Config works as the following:
+:: [keyword] = [value]
+:: it will not generate if keyword is invalid
+
+md_files_dir = ~/Dev/continers
+output_dir = ~/Dev
+header_html = ~/Dev/continers/header.html
+footer_html = ~/Dev/continers/footer.html
+index_html = ~/Dev/continers/index.html
+should_overwrite = 1
