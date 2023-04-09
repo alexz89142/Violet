@@ -14,18 +14,17 @@ After cloning the violet directory, the follow commands can be run depending on
 your OS to get a quick start with violet. GCC complier must be installed on the
 system for the build scripts to work.
 
+NOTE: example_config.cfg has layout for config files
+
 **Linux:**
 ```
 $ chmod +x ./build.sh
 $ ./build.sh
-$ ./bin/violet
+$ ./bin/violet ./example_config.cfg
 ```
 
-**Windows:**
-```
-$ .\build.bat
-$ .\bin\violet
-```
+**Windows and MacOS:**
+Currently Windows and MacOS are not directly supported, will be added later on
 
 ## Supported Markdown
 
@@ -94,7 +93,7 @@ other than the changes must be on a seperate branch, where the name of the branc
 clear outlines the feature that is being changed. I would also advise using the
 same general code format that is currently being used.
 
-## Contributions  
+## Contributions
 
 Special thanks to the following contributors:
 - alexz89142
