@@ -4,6 +4,8 @@
 #include "util.h"
 #include "parser.h"
 
+// TODO: Think about adding custom path length fields
+
 // Commands which can be found in config file
 typedef enum keyword_t
 {
@@ -43,6 +45,21 @@ typedef struct settings_t
     char *footer_data;
     char *index_data;
 } settings_t;
+
+// Util
+static int violet_build_filename(char *dest, const char *base, const char *secondary,
+                                 char seperator, int dest_size);
+
+static int violet_build_and_check_html_file(char *html_full_path,
+                                            int html_full_path_size,
+                                            const char *odp,
+                                            const char *md_filename);
+
+// HTML Translation
+static void violet_translate_token_buffer_to_html(token_t *ptb,
+                                                  const char *header_data,
+                                                  const char *footer_data,
+                                                  const char *out_filename);
 
 // Config Parsing
 static keyword_t voilet_get_keyword_type(char *word);
