@@ -3,7 +3,7 @@
 <p align='center'><img alt='Violet Logo' src='logo.webp' width=30%></p>
 
 Violet is a simple static website generator written in C. Violet allows users
-to write pages in mark down and will use a configuration file to build a website
+to write pages in Markdown and will use a configuration file to build a website
 how users would like. Though there will be an example site where
 css will be included, you will need to write own css for the customization of the
 website.
